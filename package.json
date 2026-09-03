@@ -1,0 +1,14 @@
+{
+  "name": "mag-ukraine-eore-game",
+  "version": "1.0.0",
+  "description": "MAG Ukraine — mobile-first EORE browser game (Safe/Danger swipe, Investigation quest, Truth or Myth, Land Release field simulator).",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "test": "node tests/i18n.test.mjs && node tests/decks.test.mjs && node tests/swipeGame.test.mjs && node tests/questGame.test.mjs && node tests/deminingField.test.mjs && node tests/app.integration.test.mjs",
+    "serve": "npx serve ."
+  },
+  "devDependencies": {
+    "jsdom": "^30.0.0"
+  }
+}

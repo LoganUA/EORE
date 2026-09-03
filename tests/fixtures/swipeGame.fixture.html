@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head><meta charset="UTF-8"><title>swipeGame.js test fixture</title></head>
+<body>
+<div id="app">
+  <!-- Elements outside any registered screen that swipeGame.js still reads (optional, guarded) -->
+  <span id="menuCoinVal">0</span>
+
+  <div class="screen-container">
+    <div class="screen" id="screenLevel">
+      <button id="backFromLevel">‹</button>
+      <h2 id="levelHeader"></h2>
+      <div id="levelList"></div>
+    </div>
+
+    <div class="screen" id="screenCount">
+      <button id="backFromCount">‹</button>
+      <h2 id="countHeader"></h2>
+      <div id="countGrid"></div>
+    </div>
+
+    <div class="screen" id="screenShop">
+      <button id="backFromShop">‹</button>
+      <h2 id="shopHeader"></h2>
+      <span id="shopCoinVal">0</span>
+      <div id="shopList"></div>
+      <div id="shopNote"></div>
+    </div>
+
+    <div class="screen" id="screenGame">
+      <div class="chip streak" id="streakChip">
+        <span id="flameIcon">●</span><span id="streakVal">0</span> <span id="streakLabel"></span>
+      </div>
+      <span id="gameCoinVal">0</span>
+      <button id="btnHint">💡 <span id="hintCountVal">0</span></button>
+      <div id="progressFill"></div>
+      <div id="stage"></div>
+      <button id="btnDanger"><span id="dangerLabel"></span></button>
+      <button id="btnSafe"><span id="safeLabel"></span></button>
+    </div>
+
+    <div class="screen" id="screenEnd">
+      <h2 id="resultsHeader"></h2>
+      <span id="scoreVal">0</span><span id="scoreMax">0</span>
+      <div id="scoreLabel"></div>
+      <div id="scoreTag"></div>
+      <p id="summaryDesc"></p>
+      <div id="perfectBanner"><span id="perfectBannerText"></span></div>
+      <div id="coinsEarnedText"></div>
+      <div id="missList"></div>
+      <button id="btnShare"></button>
+      <button id="btnDownload"></button>
+      <button id="btnMenuEnd"></button>
+      <button id="btnRestart"></button>
+    </div>
+  </div>
+
+  <div class="overlay" id="feedback">
+    <div id="feedbackCard">
+      <div id="feedbackTitle"></div>
+      <div id="feedbackText"></div>
+      <button id="feedbackContinue"></button>
+    </div>
+  </div>
+
+  <div class="overlay" id="hintOverlay">
+    <div id="hintCard">
+      <div id="hintTitle"></div>
+      <div id="hintText"></div>
+      <button id="hintBuyBtn" style="display:none;"></button>
+      <button id="hintClose"></button>
+    </div>
+  </div>
+</div>
+</body>
+</html>

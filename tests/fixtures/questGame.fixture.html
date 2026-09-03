@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head><meta charset="UTF-8"><title>questGame.js test fixture</title></head>
+<body>
+<div id="app">
+  <div class="screen-container">
+    <div class="screen" id="screenQuestAge">
+      <button id="backFromQuestAge">‹</button>
+      <h2 id="questAgeHeader"></h2>
+      <div id="questAgeList"></div>
+    </div>
+
+    <div class="screen" id="screenQuestList">
+      <button id="backFromQuestList">‹</button>
+      <h2 id="questListHeader"></h2>
+      <div id="questCardList"></div>
+    </div>
+
+    <div class="screen" id="screenStory">
+      <div id="backFromStory"><span id="backToScenariosLabel"></span></div>
+      <div id="stopTracker"></div>
+      <div id="storyCard">
+        <div id="storyText"></div>
+        <div id="storyOptions"></div>
+      </div>
+    </div>
+
+    <div class="screen" id="screenPhone">
+      <div id="stopTrackerPhone"></div>
+      <div id="phonePrompt"></div>
+      <div id="phoneDisplay"><span id="phoneDigits">&nbsp;</span></div>
+      <div id="phoneError"></div>
+      <div id="keypad"></div>
+      <button id="callBtn" disabled>📞 <span id="callBtnLabel"></span></button>
+      <div id="callingDots"></div>
+    </div>
+
+    <div class="screen" id="screenQuestEnd">
+      <div id="questEndTitle"></div>
+      <div id="questEndText"></div>
+      <div id="protocolRecap"></div>
+      <div id="questBonusNote"></div>
+      <button id="btnQuestEndMenu"></button>
+      <button id="btnQuestEndReplay"></button>
+      <button id="btnQuestToSwipe"><span id="questToSwipeLabel"></span></button>
+    </div>
+  </div>
+
+  <div class="overlay" id="consequenceOverlay">
+    <div id="consequenceCard">
+      <div id="consequenceTitle"></div>
+      <div id="consequenceText"></div>
+      <button id="consequenceRetry"></button>
+    </div>
+  </div>
+</div>
+</body>
+</html>

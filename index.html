@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>MAG Ukraine — тримай дистанцію</title>
+<link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+<div id="app">
+
+  <div class="topbar">
+    <div class="brand" id="brandHome"><span class="dot"></span><span id="brandLabel">MAG UKRAINE</span></div>
+    <div class="lang-toggle">
+      <button class="lang-btn" id="langUk">UA</button>
+      <button class="lang-btn" id="langEn">EN</button>
+    </div>
+  </div>
+
+  <div class="screen-container">
+
+    <!-- ===== MENU ===== -->
+    <div class="screen active" id="screenMenu">
+      <div class="menu-logo">🎯</div>
+      <div class="menu-title" id="menuTitle">MAG Ukraine</div>
+      <div class="menu-subtitle" id="menuSubtitle">Гра на розпізнавання небезпеки. Тримай дистанцію — заробляй монети.</div>
+      <div class="coin-badge"><span class="coin-ico">🪙</span><span id="menuCoinVal">0</span></div>
+      <div class="menu-actions">
+        <button class="btn primary" id="btnGoFormat">Почати гру</button>
+        <button class="btn ghost" id="btnGoShop">Магазин</button>
+      </div>
+    </div>
+
+    <!-- ===== FORMAT SELECT ===== -->
+    <div class="screen" id="screenFormat">
+      <div class="subheader">
+        <button class="backbtn" id="backFromFormat">‹</button>
+        <h2 id="formatHeader">Обери формат гри</h2>
+      </div>
+      <div class="level-list">
+        <div class="level-card" id="formatSwipe">
+          <div class="lc-icon">🎯</div>
+          <div><div class="lc-title" id="formatSwipeTitle">Безпечно чи небезпечно</div><div class="lc-desc" id="formatSwipeDesc">Свайп-гра: швидко розпізнавай ризиковані ситуації</div></div>
+        </div>
+        <div class="level-card" id="formatQuest">
+          <div class="lc-icon">🕵️</div>
+          <div><div class="lc-title" id="formatQuestTitle">Розслідування</div><div class="lc-desc" id="formatQuestDesc">Квест з розгалуженим сюжетом і викликом 101</div></div>
+        </div>
+        <div class="level-card" id="formatTruth">
+          <div class="lc-icon">🤔</div>
+          <div><div class="lc-title" id="formatTruthTitle">Правда чи Неправда</div><div class="lc-desc" id="formatTruthDesc">Перевір, що з цього факт, а що поширений міф</div></div>
+        </div>
+        <div class="level-card" id="formatField">
+          <div class="lc-icon">🚧</div>
+          <div><div class="lc-title" id="formatFieldTitle">Полігон розмінування</div><div class="lc-desc" id="formatFieldDesc">Плати за роботу саперів і дізнавайся, що реально знаходять у ґрунті</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== LEVEL SELECT ===== -->
+    <div class="screen" id="screenLevel">
+      <div class="subheader">
+        <button class="backbtn" id="backFromLevel">‹</button>
+        <h2 id="levelHeader">Обери рівень</h2>
+      </div>
+      <div class="level-list" id="levelList"></div>
+    </div>
+
+    <!-- ===== COUNT SELECT ===== -->
+    <div class="screen" id="screenCount">
+      <div class="subheader">
+        <button class="backbtn" id="backFromCount">‹</button>
+        <h2 id="countHeader">Кількість питань</h2>
+      </div>
+      <div class="count-grid" id="countGrid"></div>
+    </div>
+
+    <!-- ===== SHOP ===== -->
+    <div class="screen" id="screenShop">
+      <div class="subheader">
+        <button class="backbtn" id="backFromShop">‹</button>
+        <h2 id="shopHeader">Магазин</h2>
+      </div>
+      <div class="shop-balance"><span>🪙</span><span id="shopCoinVal">0</span></div>
+      <div class="shop-list" id="shopList"></div>
+      <div class="shop-note" id="shopNote">1 монета = 1 правильна відповідь. Підказки показують детальне пояснення до відповіді.</div>
+    </div>
+
+    <!-- ===== GAME ===== -->
+    <div class="screen" id="screenGame">
+      <div class="game-topline">
+        <div class="chip streak" id="streakChip"><span class="flame" id="flameIcon">●</span><span class="streak-num" id="streakVal">0</span> <span id="streakLabel">поспіль</span></div>
+        <div class="chip"><span>🪙</span><span id="gameCoinVal">0</span></div>
+        <button class="chip hintbtn" id="btnHint">💡 <span id="hintCountVal">0</span></button>
+      </div>
+      <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+      <div class="stage" id="stage"></div>
+      <div class="actions">
+        <button class="actbtn danger" id="btnDanger"><span class="arrow">◄</span><span id="dangerLabel">Небезпечно</span></button>
+        <button class="actbtn safe" id="btnSafe"><span id="safeLabel">Безпечно</span><span class="arrow">►</span></button>
+      </div>
+    </div>
+
+    <!-- ===== QUEST: AGE SELECT ===== -->
+    <div class="screen" id="screenQuestAge">
+      <div class="subheader">
+        <button class="backbtn" id="backFromQuestAge">‹</button>
+        <h2 id="questAgeHeader">Обери рівень</h2>
+      </div>
+      <div class="level-list" id="questAgeList"></div>
+    </div>
+
+    <!-- ===== QUEST: SCENARIO SELECT ===== -->
+    <div class="screen" id="screenQuestList">
+      <div class="subheader">
+        <button class="backbtn" id="backFromQuestList">‹</button>
+        <h2 id="questListHeader">Обери сценарій</h2>
+      </div>
+      <div class="level-list" id="questCardList"></div>
+    </div>
+
+    <!-- ===== QUEST: STORY ===== -->
+    <div class="screen" id="screenStory">
+      <div class="q-back-link" id="backFromStory">‹ <span id="backToScenariosLabel">До вибору сценарію</span></div>
+      <div class="q-stop-tracker" id="stopTracker"></div>
+      <div class="q-story-scroll">
+        <div class="q-story-card" id="storyCard">
+          <div class="q-story-text" id="storyText"></div>
+          <div class="q-story-options" id="storyOptions"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== QUEST: PHONE CALL ===== -->
+    <div class="screen" id="screenPhone">
+      <div class="q-stop-tracker" id="stopTrackerPhone"></div>
+      <div class="q-phone-wrap">
+        <div class="q-phone-shell">
+          <div class="q-phone-prompt" id="phonePrompt"></div>
+          <div class="q-phone-display" id="phoneDisplay"><span id="phoneDigits">&nbsp;</span></div>
+          <div class="q-phone-error" id="phoneError"></div>
+          <div class="q-keypad" id="keypad"></div>
+          <button class="q-call-btn" id="callBtn" disabled>📞 <span id="callBtnLabel">Викликати</span></button>
+          <div class="q-calling-dots" id="callingDots"><span></span><span></span><span></span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== QUEST: END ===== -->
+    <div class="screen" id="screenQuestEnd">
+      <div class="q-end-icon">✅</div>
+      <div class="q-end-title" id="questEndTitle"></div>
+      <div class="q-end-text" id="questEndText"></div>
+      <div class="q-protocol-recap" id="protocolRecap"></div>
+      <div class="q-bonus-note" id="questBonusNote"></div>
+      <div class="end-actions">
+        <button class="btn ghost" id="btnQuestEndMenu">До сценаріїв</button>
+        <button class="btn primary" id="btnQuestEndReplay">Пройти ще раз</button>
+      </div>
+      <button class="q-crosspromo" id="btnQuestToSwipe">🎯 <span id="questToSwipeLabel">Спробуй режим «Безпечно чи небезпечно»</span></button>
+    </div>
+
+    <!-- ===== DEMINING FIELD ===== -->
+    <div class="screen" id="screenDeminingField">
+      <div class="subheader">
+        <button class="backbtn" id="backFromDeminingField">‹</button>
+        <h2 id="deminingFieldHeader">Полігон розмінування</h2>
+      </div>
+      <div class="df-stats-row">
+        <div class="chip">🪙 <span id="dfCoinVal">0</span></div>
+        <div class="chip"><span id="dfAreaVal">0</span> <span id="dfAreaLabel">м² очищено всього</span></div>
+        <div class="chip"><span id="dfRemainingVal">0</span> <span id="dfRemainingLabel">ділянок лишилось</span></div>
+      </div>
+      <div class="df-grid" id="dfGrid"></div>
+      <div class="df-complete-banner" id="dfCompleteBanner">🏁 <span id="dfCompleteText">Ділянку повністю обстежено. Можна перейти на нову.</span></div>
+      <div class="df-actions">
+        <button class="btn ghost" id="dfBtnCatalog">Довідник загроз</button>
+        <button class="btn primary" id="dfBtnNewField" style="display:none;">Нова ділянка</button>
+      </div>
+    </div>
+
+    <!-- ===== THREAT CATALOGUE ===== -->
+    <div class="screen" id="screenThreatCatalog">
+      <div class="subheader">
+        <button class="backbtn" id="backFromCatalog">‹</button>
+        <h2 id="threatCatalogHeader">Довідник загроз</h2>
+      </div>
+      <div class="df-catalog-summary">
+        <span id="dfCatalogAreaVal">0</span> <span id="dfCatalogAreaLabel">м² безпечно очищено за весь час</span>
+      </div>
+      <div class="df-catalog-list" id="dfCatalogList"></div>
+    </div>
+
+    <!-- Demining field report overlay -->
+    <div class="overlay" id="dfReportOverlay">
+      <div class="overlay-card info" id="dfReportCard">
+        <div class="overlay-title" id="dfReportTitle"></div>
+        <div class="overlay-text" id="dfReportText"></div>
+        <button class="overlay-btn" id="dfReportClose">Зрозуміло</button>
+      </div>
+    </div>
+
+    <!-- Consequence overlay -->
+    <div class="overlay" id="consequenceOverlay">
+      <div class="overlay-card wrong" id="consequenceCard">
+        <div class="overlay-title" id="consequenceTitle">⚠ Небезпечне рішення</div>
+        <div class="overlay-text" id="consequenceText"></div>
+        <button class="overlay-btn" id="consequenceRetry">Спробувати ще раз</button>
+      </div>
+    </div>
+
+    <!-- ===== END ===== -->
+    <div class="screen" id="screenEnd">
+      <h2 class="eh" id="resultsHeader">Результат сесії</h2>
+      <div class="end-score"><span id="scoreVal">0</span><span>/<span id="scoreMax">0</span></span></div>
+      <div class="score-label" id="scoreLabel"></div>
+      <div class="end-tag" id="scoreTag">Розбір польотів</div>
+      <p class="summary-desc" id="summaryDesc"></p>
+      <div class="perfect-banner" id="perfectBanner">🏆 <span id="perfectBannerText"></span></div>
+      <div class="coins-earned">🪙 <span id="coinsEarnedText"></span></div>
+      <div class="miss-list" id="missList"></div>
+      <div class="end-actions">
+        <button class="btn ghost" id="btnShare"></button>
+        <button class="btn ghost" id="btnDownload"></button>
+        <button class="btn ghost" id="btnMenuEnd"></button>
+        <button class="btn primary" id="btnRestart"></button>
+      </div>
+      <button class="q-crosspromo" id="btnSwipeToQuest">🕵️ <span id="swipeToQuestLabel">Спробуй режим «Розслідування»</span></button>
+    </div>
+
+  </div>
+
+  <!-- Feedback overlay (after answering) -->
+  <div class="overlay" id="feedback">
+    <div class="overlay-card" id="feedbackCard">
+      <div class="overlay-title" id="feedbackTitle"></div>
+      <div class="overlay-text" id="feedbackText"></div>
+      <button class="overlay-btn" id="feedbackContinue"></button>
+    </div>
+  </div>
+
+  <!-- Hint overlay (before answering) -->
+  <div class="overlay" id="hintOverlay">
+    <div class="overlay-card info" id="hintCard">
+      <div class="overlay-title" id="hintTitle">Підказка</div>
+      <div class="overlay-text" id="hintText"></div>
+      <div id="hintActions">
+        <button class="overlay-btn" id="hintBuyBtn" style="display:none;"></button>
+        <button class="overlay-btn" id="hintClose"></button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script type="module" src="js/app.js"></script>
+</body>
+</html>
