@@ -50,6 +50,9 @@ function cacheDom() {
   dom.formatField = document.getElementById('formatField');
   dom.formatFieldTitle = document.getElementById('formatFieldTitle');
   dom.formatFieldDesc = document.getElementById('formatFieldDesc');
+  dom.btnGoFieldFromMenu = document.getElementById('btnGoFieldFromMenu');
+  dom.menuFieldTitle = document.getElementById('menuFieldTitle');
+  dom.menuFieldDesc = document.getElementById('menuFieldDesc');
   dom.btnSwipeToQuest = document.getElementById('btnSwipeToQuest');
   dom.btnQuestToSwipe = document.getElementById('btnQuestToSwipe');
   dom.questToSwipeLabel = document.getElementById('questToSwipeLabel');
@@ -72,6 +75,7 @@ function wireTopbarAndMenu() {
   dom.formatQuest.addEventListener('click', startQuestFormat);
   dom.formatTruth.addEventListener('click', startTrueFalseFormat);
   dom.formatField.addEventListener('click', startDeminingFormat);
+  dom.btnGoFieldFromMenu.addEventListener('click', startDeminingFormat);
 }
 
 /**
@@ -131,6 +135,8 @@ function refreshAppLabels() {
   dom.formatTruthDesc.textContent = t('formatTruthDesc');
   dom.formatFieldTitle.textContent = t('formatFieldTitle');
   dom.formatFieldDesc.textContent = t('formatFieldDesc');
+  dom.menuFieldTitle.textContent = t('formatFieldTitle');
+  dom.menuFieldDesc.textContent = t('formatFieldDesc');
 
   if (dom.questToSwipeLabel) dom.questToSwipeLabel.textContent = t('questToSwipeLabel');
   if (dom.swipeToQuestLabel) dom.swipeToQuestLabel.textContent = t('swipeToQuestLabel');

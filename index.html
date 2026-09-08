@@ -29,6 +29,14 @@
         <button class="btn primary" id="btnGoFormat">Почати гру</button>
         <button class="btn ghost" id="btnGoShop">Магазин</button>
       </div>
+      <button class="menu-feature-card" id="btnGoFieldFromMenu">
+        <span class="mfc-badge">НОВЕ</span>
+        <span class="mfc-icon">🚧</span>
+        <span class="mfc-text">
+          <span class="mfc-title" id="menuFieldTitle">Полігон розмінування</span>
+          <span class="mfc-desc" id="menuFieldDesc">Стань сапером — очищай ділянки й вивчай реальні загрози</span>
+        </span>
+      </button>
     </div>
 
     <!-- ===== FORMAT SELECT ===== -->
@@ -171,12 +179,15 @@
         <div class="chip"><span id="dfAreaVal">0</span> <span id="dfAreaLabel">м² очищено всього</span></div>
         <div class="chip"><span id="dfRemainingVal">0</span> <span id="dfRemainingLabel">ділянок лишилось</span></div>
       </div>
-      <div class="df-grid" id="dfGrid"></div>
+      <div class="df-field-wrap" id="dfFieldWrap">
+        <div class="df-grid" id="dfGrid"></div>
+      </div>
       <div class="df-complete-banner" id="dfCompleteBanner">🏁 <span id="dfCompleteText">Ділянку повністю обстежено. Можна перейти на нову.</span></div>
       <div class="df-actions">
         <button class="btn ghost" id="dfBtnCatalog">Довідник загроз</button>
-        <button class="btn primary" id="dfBtnNewField" style="display:none;">Нова ділянка</button>
+        <button class="btn ghost" id="dfBtnRoster">Сапери</button>
       </div>
+      <button class="btn primary df-community-btn" id="dfBtnNewField" style="display:none;">Нова ділянка</button>
     </div>
 
     <!-- ===== THREAT CATALOGUE ===== -->
@@ -189,6 +200,16 @@
         <span id="dfCatalogAreaVal">0</span> <span id="dfCatalogAreaLabel">м² безпечно очищено за весь час</span>
       </div>
       <div class="df-catalog-list" id="dfCatalogList"></div>
+    </div>
+
+    <!-- ===== DEMINER ROSTER ===== -->
+    <div class="screen" id="screenDeminerRoster">
+      <div class="subheader">
+        <button class="backbtn" id="backFromRoster">‹</button>
+        <h2 id="deminerRosterHeader">Сапери</h2>
+      </div>
+      <div class="df-roster-list" id="dfRosterList"></div>
+      <button class="btn primary" id="dfBtnHire">Найняти сапера</button>
     </div>
 
     <!-- Demining field report overlay -->

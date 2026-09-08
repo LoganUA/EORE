@@ -19,7 +19,11 @@ const DEFAULT_STATE = {
   hints: 1,                 // one free starter hint, matches the rest of the app
   lang: 'uk',
   clearedArea: 0,            // total safely cleared m² in the demining field
-  discoveredThreats: {}      // { threatId: timesFound } — powers the threat catalogue
+  discoveredThreats: {},     // { threatId: timesFound } — powers the threat catalogue
+  fieldsCompleted: 0,        // how many demining-field plots have been fully cleared
+  deminers: [                // roster of hired deminers and their PURCHASED upgrade
+    { id: 'd1', stamina: 0, equipment: 0, speed: 0 } // levels (not runtime energy/rest state)
+  ]
 };
 
 /* ---------------------------------------------------------------------
@@ -72,9 +76,16 @@ function loadInitialState() {
   const saved = storage.read();
   if (!saved || saved.version !== STORAGE_VERSION) {
     // No save yet, or it's from an older shape we don't want to trust blindly.
-    return { ...DEFAULT_STATE };
+    return { ...DEFAULT_STATE, deminers: structuredClone(DEFAULT_STATE.deminers) };
   }
-  return { ...DEFAULT_STATE, ...saved, discoveredThreats: { ...saved.discoveredThreats } };
+  return {
+    ...DEFAULT_STATE,
+    ...saved,
+    discoveredThreats: { ...saved.discoveredThreats },
+    deminers: Array.isArray(saved.deminers) && saved.deminers.length
+      ? saved.deminers.map((d) => ({ ...d }))
+      : structuredClone(DEFAULT_STATE.deminers)
+  };
 }
 
 const state = loadInitialState();
@@ -201,6 +212,63 @@ export function recordThreatFound(threatId) {
 }
 
 /* ---------------------------------------------------------------------
+ * Demining field: completed plots
+ * ------------------------------------------------------------------- */
+export function getFieldsCompleted() {
+  return state.fieldsCompleted;
+}
+
+export function incrementFieldsCompleted() {
+  state.fieldsCompleted += 1;
+  persist();
+  notify();
+  return state.fieldsCompleted;
+}
+
+/* ---------------------------------------------------------------------
+ * Demining field: deminer roster (hiring + purchased upgrade levels)
+ * ------------------------------------------------------------------- */
+const UPGRADE_STAT_CAPS = { stamina: 5, equipment: 3, speed: 5 };
+
+export function getDeminers() {
+  return state.deminers.map((d) => ({ ...d }));
+}
+
+export function getDeminer(id) {
+  const d = state.deminers.find((x) => x.id === id);
+  return d ? { ...d } : null;
+}
+
+/** Adds a new deminer at level 0 in every stat. Returns the new roster. */
+export function hireDeminer() {
+  const nextNum = state.deminers.length + 1;
+  state.deminers.push({ id: 'd' + nextNum, stamina: 0, equipment: 0, speed: 0 });
+  persist();
+  notify();
+  return getDeminers();
+}
+
+/**
+ * Increments one stat (stamina/equipment/speed) for one deminer by one
+ * level, up to that stat's cap. Returns true if the upgrade was applied,
+ * false if the deminer/stat doesn't exist or is already at its cap.
+ */
+export function upgradeDeminerStat(id, statKey) {
+  const cap = UPGRADE_STAT_CAPS[statKey];
+  if (cap === undefined) return false;
+  const deminer = state.deminers.find((d) => d.id === id);
+  if (!deminer || deminer[statKey] >= cap) return false;
+  deminer[statKey] += 1;
+  persist();
+  notify();
+  return true;
+}
+
+export function getUpgradeStatCap(statKey) {
+  return UPGRADE_STAT_CAPS[statKey];
+}
+
+/* ---------------------------------------------------------------------
  * Utilities
  * ------------------------------------------------------------------- */
 
@@ -211,7 +279,11 @@ export function getStateSnapshot() {
 
 /** For a future "reset my progress" button; wipes everything back to defaults. */
 export function resetState() {
-  Object.assign(state, { ...DEFAULT_STATE, discoveredThreats: {} });
+  Object.assign(state, {
+    ...DEFAULT_STATE,
+    discoveredThreats: {},
+    deminers: structuredClone(DEFAULT_STATE.deminers)
+  });
   persist();
   notify();
 }
