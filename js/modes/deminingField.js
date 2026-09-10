@@ -24,7 +24,7 @@
 import {
   getCoins, spendCoins,
   addClearedArea, getClearedArea,
-  recordThreatFound, getThreatCount,
+  recordThreatFound, getThreatCount, getDiscoveredThreats,
   getDeminers, getDeminer, hireDeminer, upgradeDeminerStat, getUpgradeStatCap,
   getFieldsCompleted, incrementFieldsCompleted
 } from '../core/state.js';
@@ -97,43 +97,156 @@ export function __debugRuntimeState(id) {
 }
 
 /* ---------------------------------------------------------------------
+ * Threat categories — mirrors the top-level structure used in official
+ * ordnance identification guides (aviation bombs, submunitions, mines,
+ * shells, rockets, grenades, RPG rounds, drones, fuzes), narrowed down to
+ * what's actually relevant to Ukraine. Grouping keeps the reference screen
+ * readable instead of one long list of dozens of items.
+ * ------------------------------------------------------------------- */
+const THREAT_CATEGORIES = [
+  { id: 'mines', uk: 'Наземні міни', en: 'Land mines' },
+  { id: 'submunitions', uk: 'Касетні суббоєприпаси', en: 'Cluster submunitions' },
+  { id: 'shells', uk: 'Снаряди та їх уламки', en: 'Shells & fragments' },
+  { id: 'rockets', uk: 'Реактивні снаряди (РСЗВ)', en: 'Rocket artillery (MLRS)' },
+  { id: 'grenades', uk: 'Гранати', en: 'Grenades' },
+  { id: 'rpg', uk: 'Постріли РПГ', en: 'RPG rounds' },
+  { id: 'drones', uk: 'Дрони-камікадзе', en: 'Kamikaze drones' },
+  { id: 'fuzes', uk: 'Підривники та детонатори', en: 'Fuzes & detonators' }
+];
+
+/* ---------------------------------------------------------------------
  * Threat reference data — educational, factual, no glorified imagery.
+ * Content is drawn from public ordnance-safety literature: what each item
+ * is, roughly how it activates, why it's dangerous, an approximate safety
+ * distance (deliberately general — awareness, not engineering data), and
+ * the conflicts it's commonly associated with.
+ *
+ * `photo` is intentionally left null: the game currently represents every
+ * threat with a neutral colour marker (see the CSS "df-catalog-marker"
+ * class), not a photograph. If real, rights-cleared reference photos
+ * become available later (e.g. from MAG's own materials or an official
+ * government safety campaign), drop the image path into this field —
+ * renderCatalog() already reads it and will display it automatically.
  * ------------------------------------------------------------------- */
 const THREAT_CATALOG = [
+  // ---- Наземні міни / Land mines ----
   {
-    id: 'ppMineBlast',
-    uk: { name: 'Протипіхотна фугасна міна', desc: 'Спрацьовує від тиску ноги. Деякі корпуси містять мінімум металу, тому не завжди виявляються звичайним металодетектором.' },
-    en: { name: 'Anti-personnel blast mine', desc: 'Triggers from foot pressure. Some casings contain very little metal, so they are not always found by a standard metal detector.' }
+    id: 'ppMineBlast', category: 'mines', photo: null,
+    uk: { name: 'Протипіхотна фугасна міна', desc: 'Спрацьовує від тиску ноги — важить це буквально кілька кілограмів. Деякі корпуси майже не містять металу, тому звичайний металодетектор може її не «побачити». Такі міни масово застосовуються від Другої світової війни до сьогодні, включно з війною в Україні.' },
+    en: { name: 'Anti-personnel blast mine', desc: 'Triggers from foot pressure — as little as a few kilograms of weight. Some casings contain almost no metal, so a standard detector can miss them. Used from World War II to today, including the war in Ukraine.' }
   },
   {
-    id: 'petalMine',
-    uk: { name: 'Міна ПФМ-1 («пелюстка»)', desc: 'Невелика й пластикова, часто нагадує іграшку чи шматок пластику — тому особливо небезпечна для дітей.' },
-    en: { name: 'PFM-1 mine ("petal mine")', desc: 'Small and plastic, often resembling a toy or a scrap of plastic — which makes it especially dangerous for children.' }
+    id: 'atMine', category: 'mines', photo: null,
+    uk: { name: 'Протитанкова міна', desc: 'Розрахована на вагу техніки, тому людина іноді може наступити й не підірвати її — але деякі моделі мають додаткові датчики руху чи нахилу, які реагують і на людей. Використовується від В\u2019єтнамської війни до нинішніх боїв в Україні.' },
+    en: { name: 'Anti-tank mine', desc: 'Built to trigger under a vehicle\u2019s weight, so a person may sometimes step on one without setting it off — but some models have extra tilt or motion sensors that react to people too. Used from the Vietnam War through today\u2019s fighting in Ukraine.' }
   },
   {
-    id: 'atMine',
-    uk: { name: 'Протитанкова міна', desc: 'Розрахована на великий тиск (вагу техніки), тому рідко спрацьовує від людини, але лишається смертельно небезпечною.' },
-    en: { name: 'Anti-tank mine', desc: 'Designed to trigger under heavy weight, such as a vehicle, so it rarely detonates from a person\u2019s step but remains lethally dangerous.' }
+    id: 'tripwireDevice', category: 'mines', photo: null,
+    uk: { name: 'Пристрій з розтяжкою', desc: 'Тонкий, майже непомітний дріт, натягнутий біля землі й замаскований травою чи листям, з\u2019єднаний із детонатором. Досить найлегшого зачеплення ногою. Такий спосіб мінування використовують у більшості збройних конфліктів останніх ста років.' },
+    en: { name: 'Tripwire-rigged device', desc: 'A thin, barely visible wire strung near the ground, hidden by grass or leaves and wired to a detonator. The lightest snag with a foot is enough. This method has been used in most armed conflicts of the last century.' }
+  },
+
+  // ---- Касетні суббоєприпаси / Cluster submunitions ----
+  {
+    id: 'petalMine', category: 'submunitions', photo: null,
+    uk: { name: 'Міна ПФМ-1 («пелюстка»)', desc: 'Маленька пластикова міна у формі листка, яку скидають одразу сотнями з ракет чи касетних бомб. Через розмір і форму її легко сплутати з іграшкою чи шматком сміття — і саме тому вона особливо небезпечна для дітей. Масово застосовувалась в Афганістані, а тепер і в Україні.' },
+    en: { name: 'PFM-1 mine ("petal mine")', desc: 'A small, leaf-shaped plastic mine scattered by the hundreds from rockets or cluster bombs. Its size and shape make it easy to mistake for a toy or a scrap of litter — which is exactly why it\u2019s so dangerous for children. Used extensively in Afghanistan, and now in Ukraine.' }
   },
   {
-    id: 'uxoShell',
-    uk: { name: 'Нерозірваний артилерійський снаряд', desc: 'Не спрацював при пострілі, але лишається чутливим до дотику, тиску чи переміщення.' },
-    en: { name: 'Unexploded artillery shell', desc: 'Failed to detonate on impact, but remains sensitive to touch, pressure, or movement.' }
+    id: 'clusterSubmunition', category: 'submunitions', photo: null,
+    uk: { name: 'Елемент касетного боєприпасу', desc: 'До 10\u201330% суббоєприпасів не спрацьовують одразу при падінні й перетворюються на міни-пастки непередбачуваної дії — вони можуть здетонувати від найменшого дотику роками потому. Активно застосовуються в Україні з 2022 року.' },
+    en: { name: 'Cluster submunition', desc: 'Up to 10\u201330% of submunitions fail to go off on impact and become unpredictable mine-like hazards — they can detonate from the slightest touch years later. Widely used in Ukraine since 2022.' }
   },
   {
-    id: 'clusterSubmunition',
-    uk: { name: 'Елемент касетного боєприпасу', desc: 'До 10\u201330% суббоєприпасів не спрацьовують одразу й перетворюються на міни-пастки непередбачуваної дії.' },
-    en: { name: 'Cluster submunition', desc: 'Up to 10\u201330% of submunitions fail to detonate on impact and become unpredictable mine-like hazards.' }
+    id: 'ptmSubmunition', category: 'submunitions', photo: null,
+    uk: { name: 'Протитанковий суббоєприпас', desc: 'Мініатюрна версія протитанкової міни, яку розкидають одразу десятками з ракет над великою площею. Через малий розмір їх складно помітити серед трави чи ґрунту. З\u2019являються в Україні разом із касетними ударами з 2022 року.' },
+    en: { name: 'Anti-tank submunition', desc: 'A miniature anti-tank mine scattered by the dozen from rockets over a wide area. Its small size makes it hard to spot in grass or soil. Seen in Ukraine alongside cluster strikes since 2022.' }
+  },
+
+  // ---- Снаряди та їх уламки / Shells & fragments ----
+  {
+    id: 'uxoShell', category: 'shells', photo: null,
+    uk: { name: 'Нерозірваний артилерійський снаряд', desc: 'Не спрацював при пострілі чи падінні, але лишається повністю зарядженим і чутливим до дотику, тепла чи навіть різкого руху поруч. При спрацюванні уламки розлітаються на сотні метрів. У Європі досі знаходять і знешкоджують снаряди Першої світової війни.' },
+    en: { name: 'Unexploded artillery shell', desc: 'Failed to detonate on firing or impact, but stays fully armed and sensitive to touch, heat, or even a sharp movement nearby. Fragments can travel hundreds of metres if it goes off. Shells from World War I are still being found and disposed of in Europe today.' }
   },
   {
-    id: 'tripwireDevice',
-    uk: { name: 'Пристрій з розтяжкою', desc: 'Прихований дріт, часто замаскований травою чи листям, з\u2019єднаний із детонатором.' },
-    en: { name: 'Tripwire-rigged device', desc: 'A concealed wire, often hidden by grass or leaves, connected to a detonator.' }
+    id: 'mortarMine', category: 'shells', photo: null,
+    uk: { name: 'Мінометна міна', desc: 'Менша й легша за артилерійський снаряд, летить по крутій навісній траєкторії. Хвостовик-стабілізатор з додатковим порохом небезпечний навіть окремо від самої міни. Один із найпоширеніших боєприпасів у позиційних боях в Україні з 2014 року.' },
+    en: { name: 'Mortar bomb', desc: 'Smaller and lighter than an artillery shell, fired on a steep, arcing path. Its tail-fin stabiliser carries extra propellant charges that are dangerous even separated from the bomb itself. One of the most common munitions in Ukraine\u2019s trench warfare since 2014.' }
+  },
+  {
+    id: 'shellFragment', category: 'shells', photo: null,
+    uk: { name: 'Уламок снаряда', desc: 'На вигляд це просто іржавий шматок металу неправильної форми — саме тому його найчастіше й піднімають, не підозрюючи небезпеки. Деякі уламки містять залишки вибухової речовини, здатної спалахнути від удару чи тертя. На око неможливо визначити, чи безпечний конкретний шматок металу.' },
+    en: { name: 'Shell fragment', desc: 'It just looks like a rusty, oddly-shaped piece of metal — which is exactly why people pick it up without a second thought. Some fragments still carry explosive residue that can ignite from an impact or friction. There\u2019s no way to tell by eye whether a given piece of metal is safe.' }
+  },
+
+  // ---- Реактивні снаряди (РСЗВ) / Rocket artillery (MLRS) ----
+  {
+    id: 'gradRocket', category: 'rockets', photo: null,
+    uk: { name: 'Реактивний снаряд «Град»', desc: 'Некерована ракета калібру 122 мм, яку випускають залпами по кілька десятків одразу. Частина ракет не розривається при падінні й лишається в землі повністю зарядженою. Один із найпоширеніших боєприпасів війни в Україні з 2014 року.' },
+    en: { name: '"Grad" rocket', desc: 'An unguided 122mm rocket fired in salvos of dozens at once. Some fail to detonate on impact and remain fully armed in the ground. One of the most common munitions of the war in Ukraine since 2014.' }
+  },
+  {
+    id: 'mlrsCluster', category: 'rockets', photo: null,
+    uk: { name: 'Касетна бойова частина РСЗВ', desc: 'Ракети «Ураган» і «Смерч» часто несуть не суцільний заряд, а десятки дрібних суббоєприпасів, які розсіюються над великою площею. Один-єдиний залп може лишити небезпечними уламками цілий гектар поля. Активно фіксується в Україні з 2022 року.' },
+    en: { name: 'MLRS cluster warhead', desc: '"Uragan" and "Smerch" rockets often carry dozens of small submunitions instead of one solid charge, scattered across a wide area. A single salvo can leave an entire hectare littered with hazards. Widely documented in Ukraine since 2022.' }
+  },
+
+  // ---- Гранати / Grenades ----
+  {
+    id: 'handGrenade', category: 'grenades', photo: null,
+    uk: { name: 'Ручна осколкова граната', desc: 'Активується висмикуванням чеки й падінням запобіжного важеля — вибух стається за кілька секунд. Осколки розлітаються в радіусі 15\u201325 метрів, тому небезпечна навіть для того, хто її кинув. Стандартне озброєння піхоти з часів Другої світової війни.' },
+    en: { name: 'Fragmentation hand grenade', desc: 'Activated by pulling the pin and releasing the safety lever — it detonates a few seconds later. Fragments spread up to 15\u201325 metres, making it dangerous even for whoever threw it. Standard infantry equipment since World War II.' }
+  },
+  {
+    id: 'rifleGrenade', category: 'grenades', photo: null,
+    uk: { name: 'Рушнична граната', desc: 'Виглядає як звичайна граната з хвостовиком для запуску зі ствола автомата. Летить набагато далі за ручну гранату — до 100\u2013150 метрів, тому й небезпечна зона значно більша. Використовується арміями багатьох країн, включно зі сторонами конфлікту в Україні.' },
+    en: { name: 'Rifle grenade', desc: 'Looks like a regular grenade with a tail fin for launching from a rifle barrel. It travels far further than a hand-thrown grenade — up to 100\u2013150 metres — so its danger zone is much larger too. Used by many armies worldwide, including in the war in Ukraine.' }
+  },
+
+  // ---- Постріли РПГ / RPG rounds ----
+  {
+    id: 'rpgRound', category: 'rpg', photo: null,
+    uk: { name: 'Постріл РПГ (кумулятивний)', desc: 'Протитанковий заряд, що пробиває броню спрямованим струменем розпеченого металу, а не просто вибуховою хвилею. Якщо постріл не влучив чи не розірвався, він лишається на землі повністю боєздатним. РПГ-7 та його аналоги застосовуються по всьому світу з 1960-х років.' },
+    en: { name: 'RPG round (shaped charge)', desc: 'An anti-armour charge that punches through armour with a focused jet of molten metal rather than just a blast wave. If a round misses or fails to detonate, it stays fully live on the ground. The RPG-7 and similar launchers have been used worldwide since the 1960s.' }
+  },
+  {
+    id: 'rpgThermobaric', category: 'rpg', photo: null,
+    uk: { name: 'Термобаричний постріл', desc: 'Створює хмару вибухової суміші, яка займається за частку секунди й уражає вибуховою хвилею на значно більшій площі, ніж звичайний заряд. Особливо небезпечний у закритих приміщеннях. Дедалі частіше застосовується в боях за населені пункти в Україні.' },
+    en: { name: 'Thermobaric round', desc: 'Releases a cloud of explosive mixture that ignites in a fraction of a second, producing a blast wave over a much wider area than a standard charge. Especially dangerous indoors. Increasingly used in urban fighting in Ukraine.' }
+  },
+
+  // ---- Дрони-камікадзе / Kamikaze drones ----
+  {
+    id: 'kamikazeDrone', category: 'drones', photo: null,
+    uk: { name: 'Дрон-камікадзе', desc: 'Безпілотник, який не повертається на базу, а самостійно летить до цілі й вибухає при зіткненні. Часто несе бойову частину вагою в десятки кілограмів, тому уламки можуть розлітатись на сотні метрів. Такі дрони (наприклад, «Шахед»/«Герань») стали одним із символів повітряних атак на Україну з 2022 року.' },
+    en: { name: 'Kamikaze drone', desc: 'An uncrewed aircraft that doesn\u2019t return to base — it flies itself into a target and explodes on impact. Warheads can weigh dozens of kilograms, scattering fragments hundreds of metres. Drones like "Shahed"/"Geran" have become a defining feature of air attacks on Ukraine since 2022.' }
+  },
+  {
+    id: 'droneWarhead', category: 'drones', photo: null,
+    uk: { name: 'Бойова частина дрона окремо від корпусу', desc: 'Збитий чи впалий дрон часто розвалюється на частини — бойова частина при цьому іноді лишається неушкодженою і повністю небезпечною, навіть окремо від решти корпусу. Її легко сплутати з уламком звичайної електроніки. Такі знахідки фіксують в Україні щодня.' },
+    en: { name: 'Drone warhead, separated from the airframe', desc: 'A downed or crashed drone often breaks apart — the warhead can survive intact and fully dangerous even separated from the rest of the airframe. It\u2019s easy to mistake for ordinary electronics debris. Finds like this are reported daily across Ukraine.' }
+  },
+
+  // ---- Підривники та детонатори / Fuzes & detonators ----
+  {
+    id: 'fuzeDetonator', category: 'fuzes', photo: null,
+    uk: { name: 'Підривник (детонатор)', desc: 'Невеликий механізм, що ініціює вибух основного заряду, — і саме він найчутливіший до удару, тепла чи тиску серед усіх частин боєприпасу. Може лежати окремо від снаряда чи міни й досі становити смертельну небезпеку. Тип підривника неможливо визначити на око.' },
+    en: { name: 'Fuze (detonator)', desc: 'A small mechanism that triggers the main explosive charge — and the single most sensitive part of any munition to shock, heat, or pressure. It can be found separated from the shell or mine it belonged to and remain just as deadly. There\u2019s no way to identify a fuze type by eye.' }
+  },
+  {
+    id: 'initiatorCap', category: 'fuzes', photo: null,
+    uk: { name: 'Капсуль-детонатор', desc: 'Найменший і водночас один із найчутливіших елементів у будь-якому боєприпасі — важить лише кілька грамів, але цього достатньо, щоб ініціювати набагато потужніший заряд поруч. Через мініатюрний розмір його часто плутають із дрібним металевим сміттям. Знаходять окремо від боєприпасів практично на всіх колишніх позиціях бойових дій.' },
+    en: { name: 'Blasting cap', desc: 'One of the smallest yet most sensitive components in any munition — it weighs only a few grams, but that\u2019s enough to set off a far more powerful charge nearby. Its tiny size means it\u2019s often mistaken for scrap metal. Found separated from munitions at nearly every former combat position.' }
   }
 ];
 
 function findThreatById(id) {
   return THREAT_CATALOG.find((th) => th.id === id) || null;
+}
+
+function threatsByCategory(categoryId) {
+  return THREAT_CATALOG.filter((th) => th.category === categoryId);
 }
 
 /* ---------------------------------------------------------------------
@@ -145,6 +258,10 @@ let zones = [];
 // persist, via state.js). Keyed by deminer id.
 // { state:'idle'|'working'|'resting', energy, spriteEl, barEl, restEndAt }
 let runtime = {};
+// The most recently discovered threat id, so the catalogue can highlight it
+// the next time the player opens that screen. Not persisted — purely a
+// same-session "here's what you just found" pointer, not a game mechanic.
+let lastFoundThreatId = null;
 
 let dom = {};
 
@@ -179,6 +296,7 @@ function cacheDom() {
     reportClose: document.getElementById('dfReportClose'),
     catalogList: document.getElementById('dfCatalogList'),
     catalogAreaVal: document.getElementById('dfCatalogAreaVal'),
+    catalogBadge: document.getElementById('dfCatalogBadge'),
     backFromCatalog: document.getElementById('backFromCatalog'),
     rosterList: document.getElementById('dfRosterList'),
     btnHire: document.getElementById('dfBtnHire'),
@@ -335,6 +453,15 @@ function updateStatsAndCompletion() {
   if (allCleared) {
     dom.btnNewField.textContent = t('dfCommunityBtn', communityCostFor(getFieldsCompleted()));
   }
+
+  updateCatalogBadge();
+}
+
+function updateCatalogBadge() {
+  if (!dom.catalogBadge) return;
+  const total = Object.values(getDiscoveredThreats()).reduce((a, b) => a + b, 0);
+  dom.catalogBadge.textContent = total > 99 ? '99+' : String(total);
+  dom.catalogBadge.style.display = total > 0 ? 'inline-flex' : 'none';
 }
 
 /* ---------------------------------------------------------------------
@@ -442,6 +569,7 @@ async function runClearanceSequence(deminerId, index) {
   zone.outcome = outcome;
   addClearedArea(ZONE_AREA_M2);
   if (outcome !== 'clear') recordThreatFound(outcome);
+  if (outcome !== 'clear') lastFoundThreatId = outcome;
 
   zoneEl.classList.add(outcome === 'clear' ? 'clear-marked' : 'threat-marked');
   zoneEl.classList.remove('vegetated');
@@ -503,20 +631,41 @@ function renderCatalog() {
   dom.catalogAreaVal.textContent = getClearedArea();
   dom.catalogList.innerHTML = '';
 
-  THREAT_CATALOG.forEach((threat) => {
-    const count = getThreatCount(threat.id);
-    const el = document.createElement('div');
-    el.className = 'df-catalog-item';
-    el.innerHTML = `
-      <div class="df-catalog-marker"></div>
-      <div class="df-catalog-body">
-        <div class="df-catalog-name">${threat[lang].name}</div>
-        <div class="df-catalog-desc">${threat[lang].desc}</div>
-      </div>
-      <div class="df-catalog-count">${count}</div>
-    `;
-    dom.catalogList.appendChild(el);
+  THREAT_CATEGORIES.forEach((category) => {
+    const items = threatsByCategory(category.id);
+    if (!items.length) return;
+
+    const header = document.createElement('div');
+    header.className = 'df-catalog-category';
+    header.textContent = category[lang];
+    dom.catalogList.appendChild(header);
+
+    items.forEach((threat) => {
+      const count = getThreatCount(threat.id);
+      const discovered = count > 0;
+      const el = document.createElement('div');
+      el.className = 'df-catalog-item' + (discovered ? '' : ' not-found') + (threat.id === lastFoundThreatId ? ' just-found' : '');
+
+      const photoHtml = threat.photo
+        ? `<img class="df-catalog-photo" src="${threat.photo}" alt="${threat[lang].name}">`
+        : `<div class="df-catalog-marker"></div>`;
+
+      el.innerHTML = `
+        ${photoHtml}
+        <div class="df-catalog-body">
+          <div class="df-catalog-name">${threat[lang].name}</div>
+          <div class="df-catalog-desc">${threat[lang].desc}</div>
+        </div>
+        <div class="df-catalog-count">${discovered ? count : '\u2014'}</div>
+      `;
+      dom.catalogList.appendChild(el);
+    });
   });
+
+  const justFoundEl = dom.catalogList.querySelector('.just-found');
+  if (justFoundEl) {
+    justFoundEl.scrollIntoView?.({ block: 'center' });
+  }
 }
 
 /* ---------------------------------------------------------------------
@@ -607,13 +756,14 @@ export function refreshDeminingLabels() {
   document.getElementById('dfAreaLabel').textContent = t('dfAreaLabel');
   document.getElementById('dfRemainingLabel').textContent = t('dfRemainingLabel');
   document.getElementById('dfCompleteText').textContent = t('dfCompleteText');
-  dom.btnCatalog.textContent = t('dfCatalogBtn');
+  dom.btnCatalog.querySelector('.df-btn-label').textContent = t('dfCatalogBtn');
   dom.btnRoster.textContent = t('dfRosterBtn');
   dom.reportClose.textContent = t('dfReportCloseBtn');
   document.getElementById('threatCatalogHeader').textContent = t('threatCatalogHeader');
   document.getElementById('dfCatalogAreaLabel').textContent = t('dfCatalogAreaLabel');
   document.getElementById('deminerRosterHeader').textContent = t('deminerRosterHeader');
 
+  updateCatalogBadge();
   if (isScreenActive('screenDeminingField')) updateStatsAndCompletion();
   if (isScreenActive('screenThreatCatalog')) renderCatalog();
   if (isScreenActive('screenDeminerRoster')) renderRoster();

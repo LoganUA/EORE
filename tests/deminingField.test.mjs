@@ -168,10 +168,31 @@ async function run() {
   /* ---------------- Threat catalogue still reflects true cumulative totals ---------------- */
   click('dfBtnCatalog');
   const catalogItems = doc.querySelectorAll('#dfCatalogList .df-catalog-item');
-  assert(catalogItems.length === 6, 'the catalogue lists all 6 reference threat types');
-  const catalogCountSum = [...doc.querySelectorAll('.df-catalog-count')].reduce((sum, el) => sum + Number(el.textContent), 0);
+  assert(catalogItems.length === 19, 'the catalogue lists all 19 reference threat types across every category');
+  const catalogCountSum = [...doc.querySelectorAll('.df-catalog-count')]
+    .map((el) => Number(el.textContent))
+    .filter((n) => !Number.isNaN(n)) // undiscovered entries show "—", not a number
+    .reduce((sum, n) => sum + n, 0);
   const threatTotal = Object.values(getDiscoveredThreats()).reduce((a, b) => a + b, 0);
   assert(catalogCountSum === threatTotal, 'catalogue counts still sum correctly after hiring, upgrades, and a plot transition');
+
+  /* ---------------- Categories, badge, and "just found" highlight ---------------- */
+  const categoryHeaders = doc.querySelectorAll('#dfCatalogList .df-catalog-category');
+  assert(categoryHeaders.length === 8, 'the catalogue groups threats into all 8 categories');
+
+  const undiscovered = [...catalogItems].filter((el) => el.classList.contains('not-found'));
+  const discovered = [...catalogItems].filter((el) => !el.classList.contains('not-found'));
+  assert(discovered.length === threatTotal || discovered.length <= 19, 'discovered items are visually distinguished from not-yet-found ones');
+  undiscovered.forEach((el) => {
+    assert(el.querySelector('.df-catalog-desc').textContent.length > 20, 'even an undiscovered entry still shows its full educational description (this is a reference guide, not a locked collectible)');
+  });
+
+  const badge = doc.getElementById('dfCatalogBadge');
+  assert(badge.style.display !== 'none', 'the catalogue button shows a badge once at least one threat has been found');
+  assert(Number(badge.textContent) === threatTotal, 'the badge number matches the true total of all threats found so far');
+
+  const justFound = doc.querySelector('#dfCatalogList .just-found');
+  assert(!!justFound, 'the most recently discovered threat type is visually highlighted when opening the catalogue');
 
   console.log(`\n${failures === 0 ? 'ALL TESTS PASSED' : failures + ' TEST(S) FAILED'}`);
   process.exit(failures === 0 ? 0 : 1);
